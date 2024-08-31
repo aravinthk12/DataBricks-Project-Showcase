@@ -49,10 +49,18 @@ class DataPreProcessingHousePricePredictor:
         Performs data preprocessing by calculating the age of properties. Adds a new column 'Age' to the
         DataFrame in `data_dict` under the key 'ames_housing_raw'. The age is calculated as the difference
         between the `process_date` year and the 'Year Built' column.
+        Additionally, this method removes any spaces from the column names in the DataFrame to ensure consistent naming.
+        After processing, the modified DataFrame is stored in `data_dict` under the key 'ames_housing_pre_processed'.
+
         """
-        self.data_dict["ames_housing_pre_processed"] = self.data_dict[
-            "ames_housing_raw"
-        ].withColumn("Age", self.process_date[:4] - F.col("Year Built"))
+        self.data_dict["ames_housing_pre_processed"] = (
+            self.data_dict["ames_housing_raw"]
+            .withColumn("Age", self.process_date[:4] - F.col("Year Built")))
+
+        for col_ in self.data_dict["ames_housing_pre_processed"].columns:
+            self.data_dict["ames_housing_pre_processed"] = (
+                self.data_dict["ames_housing_pre_processed"]
+                .withColumn(col_.replace(' ', ''), F.col(col_)))
 
     def _write_data(self):
         """
