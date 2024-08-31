@@ -1,0 +1,9 @@
+from dataclasses import dataclass
+from pyspark.sql import SparkSession
+from datetime import datetime as dt
+
+
+@dataclass
+class CentralArgs:
+    spark: SparkSession
+    process_date: str = dt.now().strftime("%Y-%m-%d")

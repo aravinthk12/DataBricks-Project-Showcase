@@ -1,0 +1,8 @@
+[
+  {
+    "type": "overwrite",
+    "variable_name": "ames_housing_pre_processed",
+    "path":"showcase/HousePricePrediction/output_data",
+    "format": "parquet"
+  }
+]
