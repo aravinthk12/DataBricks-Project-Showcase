@@ -32,7 +32,7 @@ class DataPreProcessingHousePricePredictor:
         self.spark = args.spark
         self.process_date = args.process_date
         self._read_data()
-        self._process_date()
+        self._process_data()
         self._write_data()
 
     def _read_data(self):
@@ -44,7 +44,7 @@ class DataPreProcessingHousePricePredictor:
             self.spark, "showcase/HousePricePrediction/data_preprocessing/read.json"
         )
 
-    def _process_date(self):
+    def _process_data(self):
         """
         Performs data preprocessing by calculating the age of properties. Adds a new column 'Age' to the
         DataFrame in `data_dict` under the key 'ames_housing_raw'. The age is calculated as the difference
@@ -58,9 +58,17 @@ class DataPreProcessingHousePricePredictor:
         ].withColumn("Age", self.process_date[:4] - F.col("Year Built"))
 
         for col_ in self.data_dict["ames_housing_pre_processed"].columns:
+            if " " in col_:
+                self.data_dict["ames_housing_pre_processed"] = (
+                    self.data_dict["ames_housing_pre_processed"]
+                    .withColumn(col_.replace(" ", ""), F.col(col_))
+                    .drop(col_)
+                )
+
+        for col_ in ["GarageCars", "GarageArea", "TotalBsmtSF"]:
             self.data_dict["ames_housing_pre_processed"] = self.data_dict[
                 "ames_housing_pre_processed"
-            ].withColumn(col_.replace(" ", ""), F.col(col_))
+            ].where(F.col(col_).isNotNull())
 
     def _write_data(self):
         """

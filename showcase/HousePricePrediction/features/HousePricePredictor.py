@@ -2,51 +2,50 @@ from showcase.utils.CentralArgs import CentralArgs
 from showcase.utils.helpers import read_datasets, write_datasets
 import pyspark.sql.functions as F
 from pyspark.ml.feature import VectorAssembler, PolynomialExpansion, StringIndexer
+from pyspark.ml.regression import (
+    LinearRegression,
+    DecisionTreeRegressor,
+    RandomForestRegressor,
+    GBTRegressor,
+)
+import mlflow
+from pyspark.ml.evaluation import RegressionEvaluator
+import mlflow.spark
 
 
-feature_list_for_vector = [
-    "OverallQual",
-    "GrLivArea",
-    "GarageCars",
-    "GarageArea",
-    "TotalBsmtSF",
-    "YearBuilt",
-    "YearRemod/Add",
-    "TotalSF",
-    "PricePerSF",
-    "Qual_LivArea",
-    "GrLivAreaPoly",
-    "LotArea",
-    "FullBath",
-    "Age",
-    "LotFrontage",
-    "Fireplaces",
-    "Neighborhood_Index",
-    "HouseStyle_Index",
-]
+model_config = {
+    "LinearRegression": LinearRegression,
+    "DecisionTreeRegressor": DecisionTreeRegressor,
+    "RandomForestRegressor": RandomForestRegressor,
+    "GBTRegressor": GBTRegressor,
+}
 
 
 class HousePricePredictor:
 
     def __init__(self, args: CentralArgs):
 
-        self.spark = args.spark
-        self.process_date = args.process_date
+        self.args = args
         self._read_data()
-        self._process_date()
+        self._process_data()
         # self._write_data()
 
     def _read_data(self):
         self.data_dict = read_datasets(
-            self.spark, "showcase/HousePricePrediction/features/read.json"
+            self.args.spark, "showcase/HousePricePrediction/features/read.json"
         )
 
-    def _process_date(self):
+    def _process_data(self):
+
+        # Build features
         self._get_area_feature()
         self._prep_polynomial_features()
         self._encode_cat_features()
         self._handle_missing_values()
         self._prep_feature_vectors()
+
+        # Model
+        self._run_model()
 
     def _write_data(self):
         write_datasets(
@@ -103,7 +102,7 @@ class HousePricePredictor:
 
     def _handle_missing_values(self):
 
-        for col_ in ["LotFrontage", "FullBath"]:
+        for col_ in ["LotFrontage", "FullBath", "TotalSF", "PricePerSF"]:
             self.data_dict["price_predict_features_poly"] = self.data_dict[
                 "price_predict_features_poly"
             ].fillna(
@@ -129,8 +128,36 @@ class HousePricePredictor:
     def _prep_feature_vectors(self):
 
         vector_assembler = VectorAssembler(
-            inputCols=feature_list_for_vector, outputCol="features"
+            inputCols=self.args.FeatureList, outputCol="features"
         )
         self.data_dict["final_features"] = vector_assembler.transform(
             self.data_dict["price_predict_features_poly"]
         )
+
+    def _run_model(self):
+
+        self.data_dict["train_data"], self.data_dict["test_data"] = self.data_dict[
+            "final_features"
+        ].randomSplit([0.8, 0.2], seed=42)
+
+        target = "SalePrice"
+
+        with mlflow.start_run(run_name=self.args.ModelName):
+
+            # Train the model
+            model_fit = model_config[self.args.ModelName](
+                labelCol=target, featuresCol="features"
+            ).fit(self.data_dict["train_data"])
+
+            # Prediction
+            predictions = model_fit.transform(self.data_dict["test_data"])
+
+            # Evaluate the Model
+            evaluator = RegressionEvaluator(
+                labelCol=target, predictionCol="prediction", metricName="rmse"
+            )
+            rmse = evaluator.evaluate(predictions)
+
+            # Log metrics
+            mlflow.log_metric("rmse", rmse)
+            mlflow.spark.log_model(model_fit, "model")
