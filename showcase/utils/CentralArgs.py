@@ -7,3 +7,5 @@ from datetime import datetime as dt
 class CentralArgs:
     spark: SparkSession
     process_date: str = dt.now().strftime("%Y-%m-%d")
+    ModelName: str = None
+    FeatureList: list = None
