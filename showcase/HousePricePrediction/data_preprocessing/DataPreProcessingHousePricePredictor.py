@@ -53,28 +53,27 @@ class DataPreProcessingHousePricePredictor:
         After processing, the modified DataFrame is stored in `data_dict` under the key 'ames_housing_pre_processed'.
 
         """
-        self.data_dict["ames_housing_pre_processed"] = (
-            self.data_dict["ames_housing_raw"]
-            .withColumn("Age", self.process_date[:4] - F.col("Year Built")))
+        self.data_dict["ames_housing_pre_processed"] = self.data_dict[
+            "ames_housing_raw"
+        ].withColumn("Age", self.process_date[:4] - F.col("Year Built"))
 
         for col_ in self.data_dict["ames_housing_pre_processed"].columns:
-            self.data_dict["ames_housing_pre_processed"] = (
-                self.data_dict["ames_housing_pre_processed"]
-                .withColumn(col_.replace(' ', ''), F.col(col_)))
+            self.data_dict["ames_housing_pre_processed"] = self.data_dict[
+                "ames_housing_pre_processed"
+            ].withColumn(col_.replace(" ", ""), F.col(col_))
 
     def _write_data(self):
         """
-            Writes the preprocessed datasets to their respective locations as defined in the JSON configuration file.
+        Writes the preprocessed datasets to their respective locations as defined in the JSON configuration file.
 
-            This method uses the `write_datasets` function to write all datasets stored in `self.data_dict` to the locations
-            and formats specified in the JSON file located at "showcase/HousePricePrediction/data_preprocessing/write.json".
+        This method uses the `write_datasets` function to write all datasets stored in `self.data_dict` to the locations
+        and formats specified in the JSON file located at "showcase/HousePricePrediction/data_preprocessing/write.json".
 
-            After successfully writing the data, it prints a confirmation message indicating that the overwrite operation
-            is complete.
+        After successfully writing the data, it prints a confirmation message indicating that the overwrite operation
+        is complete.
         """
 
-        write_datasets(self.data_dict, "showcase/HousePricePrediction/data_preprocessing/write.json")
-        print("overwrite complete")
-
-
-
+        write_datasets(
+            self.data_dict,
+            "showcase/HousePricePrediction/data_preprocessing/write.json",
+        )

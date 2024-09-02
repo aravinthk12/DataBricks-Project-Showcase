@@ -1,6 +1,9 @@
 from showcase.HousePricePrediction.data_preprocessing.DataPreProcessingHousePricePredictor import (
     DataPreProcessingHousePricePredictor,
 )
+from showcase.HousePricePrediction.features.HousePricePredictor import (
+    HousePricePredictor,
+)
 from showcase.utils.CentralArgs import CentralArgs
 from showcase.utils.helpers import SparkHelpers
 from datetime import datetime as dt
@@ -13,3 +16,5 @@ if __name__ == "__main__":
     DataPreProcessingHousePricePredictor(
         CentralArgs(spark=spark, process_date=process_date)
     )
+
+    HousePricePredictor(CentralArgs(spark=spark, process_date=process_date))

@@ -103,6 +103,8 @@ def write_datasets(data_dict: dict, json_path: str) -> None:
             .save(out_dict["path"] + "/" + out_dict["variable_name"])
         )
 
-        print(f"table name: {out_dict['variable_name']} \n"
-              f"write_location: {out_dict['path']}/{out_dict['variable_name']} \n"
-              f"status: Success")
+        print(
+            f"table name: {out_dict['variable_name']} \n"
+            f"write_location: {out_dict['path']}/{out_dict['variable_name']} \n"
+            f"status: Success"
+        )
