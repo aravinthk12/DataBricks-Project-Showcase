@@ -1,0 +1,12 @@
+[
+  {
+    "type": "path",
+    "variable_name": "ames_housing_raw",
+    "path":"showcase/HousePricePrediction/input_mock_data/AmesHousing.csv",
+    "format": "csv",
+    "options": {
+      "header": true,
+      "inferSchema": true
+    }
+  }
+]

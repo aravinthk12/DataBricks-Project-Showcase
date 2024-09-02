@@ -1,0 +1,9 @@
+[
+  {
+    "type": "path",
+    "variable_name": "ames_housing_pre_processed",
+    "path":"showcase/HousePricePrediction/output_data/ames_housing_pre_processed",
+    "format": "parquet",
+    "options": {}
+  }
+]
