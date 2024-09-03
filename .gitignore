@@ -2,3 +2,5 @@ dist
 .idea
 poetry.lock
 mlruns
+mlruns/models
+/model/

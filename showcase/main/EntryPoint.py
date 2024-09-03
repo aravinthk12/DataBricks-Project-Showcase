@@ -1,7 +1,7 @@
 from showcase.HousePricePrediction.data_preprocessing.DataPreProcessingHousePricePredictor import (
     DataPreProcessingHousePricePredictor,
 )
-from showcase.HousePricePrediction.features.HousePricePredictor import (
+from showcase.HousePricePrediction.model.HousePricePredictor import (
     HousePricePredictor,
 )
 from showcase.utils.CentralArgs import CentralArgs

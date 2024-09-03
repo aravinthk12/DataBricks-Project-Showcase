@@ -12,6 +12,7 @@ import mlflow
 from pyspark.ml.evaluation import RegressionEvaluator
 import mlflow.spark
 
+from showcase.utils.mlflow import mlflow_create_experiment
 
 model_config = {
     "LinearRegression": LinearRegression,
@@ -32,12 +33,12 @@ class HousePricePredictor:
 
     def _read_data(self):
         self.data_dict = read_datasets(
-            self.args.spark, "showcase/HousePricePrediction/features/read.json"
+            self.args.spark, "showcase/HousePricePrediction/model/read.json"
         )
 
     def _process_data(self):
 
-        # Build features
+        # Build model
         self._get_area_feature()
         self._prep_polynomial_features()
         self._encode_cat_features()
@@ -128,7 +129,7 @@ class HousePricePredictor:
     def _prep_feature_vectors(self):
 
         vector_assembler = VectorAssembler(
-            inputCols=self.args.FeatureList, outputCol="features"
+            inputCols=self.args.FeatureList, outputCol="model"
         )
         self.data_dict["final_features"] = vector_assembler.transform(
             self.data_dict["price_predict_features_poly"]
@@ -142,12 +143,21 @@ class HousePricePredictor:
 
         target = "SalePrice"
 
-        with mlflow.start_run(run_name=self.args.ModelName):
+        exp = mlflow_create_experiment(experiment_name="HousePricePrediction",
+                                 artifact_location="model",
+                                 tags={
+                                     "environment": "dev",
+                                     "model": self.args.ModelName
+                                 })
+
+        with mlflow.start_run(run_name=self.args.ModelName, experiment_id=exp.experiment_id):
+
+            params = {
+                "labelCol": target, "featuresCol": "model"
+            }
 
             # Train the model
-            model_fit = model_config[self.args.ModelName](
-                labelCol=target, featuresCol="features"
-            ).fit(self.data_dict["train_data"])
+            model_fit = model_config[self.args.ModelName](**params).fit(self.data_dict["train_data"])
 
             # Prediction
             predictions = model_fit.transform(self.data_dict["test_data"])
@@ -161,3 +171,4 @@ class HousePricePredictor:
             # Log metrics
             mlflow.log_metric("rmse", rmse)
             mlflow.spark.log_model(model_fit, "model")
+            mlflow.log_params(params)
