@@ -1,0 +1,41 @@
+# This is a Databricks asset bundle definition for HousePricePredictor.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: HousePricePredictor
+
+artifacts:
+  default:
+    type: whl
+    build: poetry build
+    path: .
+
+
+include:
+  - resources/*.yml
+
+variables:
+  trigger:
+    description: "Workflow schedule"
+    default: "PAUSED"
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://adb-2826077748590817.17.azuredatabricks.net
+    git:
+      branch: feature/HousePricePrediction
+    variables:
+      trigger: "PAUSED"
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-2826077748590817.17.azuredatabricks.net
+      root_path: /Users/arvindk2505@outlook.com/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: arvindk2505@outlook.com
+    git:
+      branch: master
+    variables:
+      trigger: "PAUSED"

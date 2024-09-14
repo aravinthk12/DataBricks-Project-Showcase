@@ -33,7 +33,7 @@ class HousePricePredictor:
 
     def _read_data(self):
         self.data_dict = read_datasets(
-            self.args.spark, "showcase/HousePricePrediction/model/read.json"
+            self.args.spark, self.args.environment, "showcase/HousePricePrediction/model", "read"
         )
 
     def _process_data(self):
@@ -50,8 +50,8 @@ class HousePricePredictor:
 
     def _write_data(self):
         write_datasets(
-            self.data_dict,
-            "showcase/HousePricePrediction/data_preprocessing/write.json",
+            self.data_dict, self.args.environment,
+            "showcase/HousePricePrediction/data_preprocessing", "write",
         )
         print("overwrite complete")
 
@@ -142,33 +142,49 @@ class HousePricePredictor:
         ].randomSplit([0.8, 0.2], seed=42)
 
         target = "SalePrice"
+        params = {"labelCol": target, "featuresCol": "model"}
 
-        exp = mlflow_create_experiment(experiment_name="HousePricePrediction",
-                                 artifact_location="model",
-                                 tags={
-                                     "environment": "dev",
-                                     "model": self.args.ModelName
-                                 })
+        if self.args.mlflow_login.lower() == "false":
+            model_fit = model_config[self.args.ModelName](**params).fit(
+                self.data_dict["train_data"]
+            )
 
-        with mlflow.start_run(run_name=self.args.ModelName, experiment_id=exp.experiment_id):
-
-            params = {
-                "labelCol": target, "featuresCol": "model"
-            }
-
-            # Train the model
-            model_fit = model_config[self.args.ModelName](**params).fit(self.data_dict["train_data"])
-
-            # Prediction
             predictions = model_fit.transform(self.data_dict["test_data"])
 
-            # Evaluate the Model
             evaluator = RegressionEvaluator(
                 labelCol=target, predictionCol="prediction", metricName="rmse"
             )
             rmse = evaluator.evaluate(predictions)
 
-            # Log metrics
-            mlflow.log_metric("rmse", rmse)
-            mlflow.spark.log_model(model_fit, "model")
-            mlflow.log_params(params)
+            print(rmse)
+
+        else:
+
+            exp = mlflow_create_experiment(
+                experiment_name="HousePricePrediction",
+                artifact_location="model",
+                tags={"environment": "dev", "model": self.args.ModelName},
+            )
+
+            with mlflow.start_run(
+                run_name=self.args.ModelName, experiment_id=exp.experiment_id
+            ):
+
+                # Train the model
+                model_fit = model_config[self.args.ModelName](**params).fit(
+                    self.data_dict["train_data"]
+                )
+
+                # Prediction
+                predictions = model_fit.transform(self.data_dict["test_data"])
+
+                # Evaluate the Model
+                evaluator = RegressionEvaluator(
+                    labelCol=target, predictionCol="prediction", metricName="rmse"
+                )
+                rmse = evaluator.evaluate(predictions)
+
+                # Log metrics
+                mlflow.log_metric("rmse", rmse)
+                mlflow.spark.log_model(model_fit, "model")
+                mlflow.log_params(params)
