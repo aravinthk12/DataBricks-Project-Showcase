@@ -29,7 +29,7 @@ python --version
 ### 2. Clone the repository
 ```bash
 git clone https://github.com/aravinthk12/DataBricks-Project-Showcase
-cd DataBricks-Project-Showcase```
+cd DataBricks-Project-Showcase
 ```
 ### 3. Install Dependencies
 ```bash
