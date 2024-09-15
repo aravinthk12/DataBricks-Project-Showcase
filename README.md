@@ -114,6 +114,7 @@ bottom-right corner of the attached image for a better understanding of its func
 ![data preprocessing](docs/databricks-snips/data_preprocessing_run.png) 
 ![model run](docs/databricks-snips/model_run.png)
 
+## MLFlow
 ### MLFlow Model Run UI
 Here's what you will observe when you execute Step 6: The MlFlow command:
 You'll be able to track, visualize, and log various aspects of your machine learning experiments, 
