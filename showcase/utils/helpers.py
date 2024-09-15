@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession, DataFrame
 import json
 import platform
 from typing import Dict, List
+import importlib.resources as resources
 
 
 class SparkHelpers:
@@ -27,35 +28,48 @@ class SparkHelpers:
         return SparkSession.builder.appName(appName).getOrCreate()
 
 
-def read_json(json_path: str) -> List[Dict]:
+def read_json(json_path: str, file_name: str) -> List[Dict]:
     """
     Reads a JSON file and returns its content as a list of dictionaries.
 
+    The file path is determined based on the operating system. On Windows, it uses a fixed path,
+    while on other systems, it uses a dynamic path based on Python's version.
+
     Args:
         json_path (str): The path to the JSON file to read.
+        file_name (str):
 
     Returns:
         list: A list of dictionaries representing the JSON data.
     """
     if platform.system() == "Windows":
-        additional_path = ""
+        print("Windows sys")
+        resource_ref = json_path + "/" + file_name + ".json"
+        with open(f"{resource_ref}", "r") as files:
+            data = json.load(files)
     else:
         # to provide Databricks path
-        additional_path = ""
+        resource_ref = resources.files(f"{json_path.replace('/', '.')}") / f"{file_name}.json"
+        with resources.as_file(resource_ref) as file_path:
+            # Check if the file exists and load its content
+            if file_path.is_file():
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+            else:
+                print(f"File does not exist: {file_path}")
 
-    with open(f"{additional_path}{json_path}", "r") as files:
-        data_list = json.load(files)
-
-    return data_list
+    return data
 
 
-def read_datasets(spark: SparkSession, json_path: str) -> Dict[str, DataFrame]:
+def read_datasets(spark: SparkSession, env: str, json_path: str, file_name: str) -> Dict[str, DataFrame]:
     """
     Reads datasets specified in a JSON configuration file and returns a dictionary of DataFrames.
 
     Args:
         spark (SparkSession): The SparkSession instance used to read the data.
+        env (str)
         json_path (str): The path to the JSON configuration file that specifies the datasets.
+        file_name (Str): read/write
 
     Returns:
         dict: A dictionary where keys are dataset names and values are Spark DataFrames.
@@ -63,14 +77,20 @@ def read_datasets(spark: SparkSession, json_path: str) -> Dict[str, DataFrame]:
     Raises:
         ValueError: If the 'type' field in the JSON configuration is not "path".
     """
-    data_list = read_json(json_path)
+    data_list = read_json(json_path, file_name)
     data_dict = {}
     for in_dict in data_list:
+
+        if platform.system() == "Windows":
+            path = in_dict["path"]
+        else:
+            path = "dbfs:/tables/" + env + '/' + in_dict["path"]
+
         if in_dict["type"] == "path":
             data_dict[in_dict["variable_name"]] = (
                 spark.read.format(in_dict["format"])
                 .options(**in_dict["options"])
-                .load(in_dict["path"])
+                .load(path)
             )
         else:
             raise ValueError("Please provide a valid 'type'")
@@ -78,7 +98,7 @@ def read_datasets(spark: SparkSession, json_path: str) -> Dict[str, DataFrame]:
     return data_dict
 
 
-def write_datasets(data_dict: dict, json_path: str) -> None:
+def write_datasets(data_dict: dict, env: str, json_path: str, file_name: str) -> None:
     """
     Writes datasets stored in a dictionary to the specified paths and formats as defined in a JSON configuration file.
 
@@ -88,19 +108,26 @@ def write_datasets(data_dict: dict, json_path: str) -> None:
 
     Args:
         data_dict (dict): A dictionary where the keys are variable names (str) and the values are Spark DataFrames.
+        env (str): env
         json_path (str): The file path to a JSON configuration file that specifies how and where to save each DataFrame.
+        file_name (Str): read/write
 
     Returns:
         None
     """
 
-    data_list = read_json(json_path)
+    data_list = read_json(json_path, file_name)
     for out_dict in data_list:
+
+        if platform.system() == "Windows":
+            path = out_dict["path"]
+        else:
+            path = "dbfs:/tables/" + env + '/' + out_dict["path"]
         (
             data_dict[out_dict["variable_name"]]
             .write.format(out_dict["format"])
             .mode(out_dict["type"])
-            .save(out_dict["path"] + "/" + out_dict["variable_name"])
+            .save(path + "/" + out_dict["variable_name"])
         )
 
         print(

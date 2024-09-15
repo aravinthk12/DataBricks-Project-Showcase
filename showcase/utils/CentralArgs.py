@@ -9,3 +9,5 @@ class CentralArgs:
     process_date: str = dt.now().strftime("%Y-%m-%d")
     ModelName: str = None
     FeatureList: list = None
+    environment: str = "dev"
+    mlflow_login: str = "false"

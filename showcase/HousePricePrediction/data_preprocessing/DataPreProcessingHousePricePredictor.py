@@ -31,6 +31,7 @@ class DataPreProcessingHousePricePredictor:
         """
         self.spark = args.spark
         self.process_date = args.process_date
+        self.args = args
         self._read_data()
         self._process_data()
         self._write_data()
@@ -41,7 +42,7 @@ class DataPreProcessingHousePricePredictor:
         "showcase/HousePricePrediction/data_preprocessing/read.json".
         """
         self.data_dict = read_datasets(
-            self.spark, "showcase/HousePricePrediction/data_preprocessing/read.json"
+            self.spark, self.args.environment, "showcase/HousePricePrediction/data_preprocessing", "read"
         )
 
     def _process_data(self):
@@ -82,6 +83,7 @@ class DataPreProcessingHousePricePredictor:
         """
 
         write_datasets(
-            self.data_dict,
-            "showcase/HousePricePrediction/data_preprocessing/write.json",
+            self.data_dict, self.args.environment,
+            "showcase/HousePricePrediction/data_preprocessing", "write",
         )
+        print("overwrite complete")
