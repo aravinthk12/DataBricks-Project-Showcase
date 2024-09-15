@@ -28,8 +28,8 @@ python --version
 
 ### 2. Clone the repository
 ```bash
-git clone https://github.com/aravinthk12/DataBricks-Project-Showcase
-cd DataBricks-Project-Showcase
+git clone https://github.com/aravinthk12/MLOps-Showcase
+cd MLOps-Showcase
 ```
 ### 3. Install Dependencies
 ```bash
@@ -92,6 +92,44 @@ databricks bundle deploy -t dev # to deploy the development
 ```bash
 databricks bundle run HousePricePrediction
 ```
+
+## After Bundle Deployment
+### Dev and Prod instances of the Job
+In an ideal setup, the Dev and Prod instances would be deployed in two separate Databricks workspaces 
+when you execute the deploy command. However, since this project is still in the experimental phase, 
+I have deployed both environments within the same workspace for simplicity and ease of testing. If you 
+check the bundle config file (databricks.yml), the workspace link will be same.
+![Dev and Prod workflow](docs/databricks-snips/prod_and_dev_wf.png)
+
+### Orchestration
+This how the Job Orchestration UI will look like in databricks after deployment and successful run
+![After successful run](docs/databricks-snips/successful_run.png)
+
+### Run Notebook for 2 different Jobs
+For those wondering why there's a notebook included for Databricks deployment, it's because the notebook serves a 
+specific purpose: it accepts runtime parameters and executes different sets of code based on those parameters. 
+This dynamic capability is more seamlessly handled in notebooks compared to traditional .py scripts, which is why 
+the notebook is part of this repository. If you're curious, check out the runtime parameters available in the 
+bottom-right corner of the attached image for a better understanding of its functionality.
+![data preprocessing](docs/databricks-snips/data_preprocessing_run.png) 
+![model run](docs/databricks-snips/model_run.png)
+
+### MLFlow Model Run UI
+Here's what you will observe when you execute Step 6: The MlFlow command:
+You'll be able to track, visualize, and log various aspects of your machine learning experiments, 
+such as parameters, metrics, and models.
+![mlflow](docs/mlflow-snips/after_experiments_runs.png)
+
+
+### MLFlow Model Performance comparison
+This view in MLFlow allows you to compare model performance across multiple runs. 
+It provides a clear overview of the features used for each model, the parameters passed, 
+and the resulting metrics. This makes it easy to evaluate and refine your models.
+
+Note: MLFlow is currently not integrated with Databricks in this project, but this feature 
+is on the roadmap for future enhancements.
+![mlflow](docs/mlflow-snips/compare_model_perf.png)
+
 
 ## Future Work
 
